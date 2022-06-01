@@ -1,12 +1,11 @@
 use bytes::BytesMut;
-use futures::sink::SinkExt;
 use futures::StreamExt as FuturesStreamEx;
 use tokio::io::{AsyncRead, AsyncWrite};
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::unbounded_channel;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use tokio_stream::{Stream, StreamExt};
+use tokio_stream::StreamExt;
+use tokio_util::codec::FramedWrite;
 use tokio_util::codec::{Decoder, Encoder};
-use tokio_util::codec::{FramedRead, FramedWrite};
 
 struct MyCodec {}
 
@@ -46,8 +45,8 @@ async fn spawn_read_write_tasks<
     let (tx1, mut rx1) = unbounded_channel::<usize>();
     let (tx2, mut rx2) = unbounded_channel::<usize>();
 
-    let rx1_stream = UnboundedReceiverStream::new(rx1);
-    let rx2_stream = UnboundedReceiverStream::new(rx2);
+    let rx1_stream = tokio_stream::StreamExt::map(UnboundedReceiverStream::new(rx1), Ok);
+    let rx2_stream = tokio_stream::StreamExt::map(UnboundedReceiverStream::new(rx2), Ok);
 
     let rx_stream = rx1_stream.merge(rx2_stream);
 
